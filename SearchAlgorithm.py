@@ -62,11 +62,6 @@ class Node:
                 - node_destination: PATH of the destination station
                 - city: CITYINFO with the information of the city (see CityInfo class definition)
         """
-        def minimDistance():
-            x = fabs(node_destination.station.x - self.station.x)
-            y = fabs(node_destination.station.y - self.station.y)
-            
-            return sqrt(x*x + y*y)
         
         if typePreference == 0:
             print "Null Heusrisitc"
@@ -78,7 +73,7 @@ class Node:
             
         elif typePreference == 2:
             #Minim distance
-            self.h = minimDistance()
+            self.h = minimDistance(self.station, node_destination.station)
             
         elif typePreference == 3:
             #Minim transfer
@@ -207,34 +202,40 @@ def setCostTable( typePreference, stationList,city):
     elif typePreference == 2:
         for i in city.adjacency.keys():
             for j in city.adjacency[i].keys():
-                x = fabs(stationList[i - 1].x - stationList[j - 1].x)
-                y = fabs(stationList[i - 1].y - stationList[j - 1].y)
-
+                distance = minimDistance(stationList[i-1], stationList[j-1])
                 if costTable.has_key(i):
-                    costTable[i][j] = sqrt(x*x + y*y)
+                    costTable[i][j] = distance
                 else:
                     costTable[i] = {}
-                    costTable[i][j] = sqrt(x*x + y*y)
+                    costTable[i][j] = distance
                     
     elif typePreference == 3:
         for i in city.adjacency.keys():
             for j in city.adjacency[i].keys():
-
-                if costTable.has_key(i):
-                    costTable[i][j] = 1
-                else:
-                    costTable[i] = {}
-                    costTable[i][j] = 1
+                if minimDistance(stationList[i-1], stationList[j-1]) == 0:
+                    
+                    if costTable.has_key(i):
+                        costTable[i][j] = stationList[i-1].destinationDic[j]
+                    else:
+                        costTable[i] = {}
+                        costTable[i][j] = stationList[i-1].destinationDic[j]
                     
     elif typePreference == 4:
         for i in city.adjacency.keys():
             for j in city.adjacency[i].keys():
-
-                if costTable.has_key(i):
-                    costTable[i][j] = 1
+                if minimDistance(stationList[i-1], stationList[j-1]) == 0:
+                    
+                    if costTable.has_key(i):
+                        costTable[i][j] = 0
+                    else:
+                        costTable[i] = {}
+                        costTable[i][j] = 0
                 else:
-                    costTable[i] = {}
-                    costTable[i][j] = 1
+                    if costTable.has_key(i):
+                        costTable[i][j] = 1
+                    else:
+                        costTable[i] = {}
+                        costTable[i][j] = 1
 
     return costTable
 
@@ -289,5 +290,9 @@ def AstarAlgorithm(stationList, coord_origin, coord_destination, typePreference,
             min_distance_destination
     """
 
-
+def minimDistance(station, destination):
+        x = fabs(destination.x - station.x)
+        y = fabs(destination.y - station.y)
+            
+        return sqrt(x*x + y*y)
 
