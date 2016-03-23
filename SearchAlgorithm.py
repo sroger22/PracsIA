@@ -99,7 +99,7 @@ class Node:
                  - costTable: DICTIONARY. Relates each station with their adjacency an their real cost. NOTE that this
                              cost can be in terms of any preference.
         """
-
+        self.g = costTable[self.father.station.id][self.station.id] + self.father.g
 
 
 
@@ -219,6 +219,12 @@ def setCostTable( typePreference, stationList,city):
                     else:
                         costTable[i] = {}
                         costTable[i][j] = stationList[i-1].destinationDic[j]
+                else:
+                    if costTable.has_key(i):
+                        costTable[i][j] = 0
+                    else:
+                        costTable[i] = {}
+                        costTable[i][j] = 0
                     
     elif typePreference == 4:
         for i in city.adjacency.keys():
