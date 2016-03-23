@@ -181,8 +181,9 @@ def setCostTable( typePreference, stationList,city):
                                  type of Preference Selected.
     """
     costTable = {}
-    
-    if typePreference == 1:
+
+    #Adjacency
+    if typePreference == 0:
         for i in city.adjacency.keys():
             for j in city.adjacency[i].keys():
 
@@ -190,7 +191,50 @@ def setCostTable( typePreference, stationList,city):
                     costTable[i][j] = 1
                 else:
                     costTable[i] = {}
-                    costTable[i][j] = city[i]
+                    costTable[i][j] = 1
+                    
+    #Minimum time             
+    elif typePreference == 1:
+        for i in city.adjacency.keys():
+            for j in city.adjacency[i].keys():
+                if costTable.has_key(i):
+                    costTable[i][j] = stationList[i - 1].destinationDic[j]
+                else:
+                    costTable[i] = {}
+                    costTable[i][j] = stationList[i - 1].destinationDic[j]
+                    
+    #Minimum distance           
+    elif typePreference == 2:
+        for i in city.adjacency.keys():
+            for j in city.adjacency[i].keys():
+                x = fabs(stationList[i - 1].x - stationList[j - 1].x)
+                y = fabs(stationList[i - 1].y - stationList[j - 1].y)
+
+                if costTable.has_key(i):
+                    costTable[i][j] = sqrt(x*x + y*y)
+                else:
+                    costTable[i] = {}
+                    costTable[i][j] = sqrt(x*x + y*y)
+                    
+    elif typePreference == 3:
+        for i in city.adjacency.keys():
+            for j in city.adjacency[i].keys():
+
+                if costTable.has_key(i):
+                    costTable[i][j] = 1
+                else:
+                    costTable[i] = {}
+                    costTable[i][j] = 1
+                    
+    elif typePreference == 4:
+        for i in city.adjacency.keys():
+            for j in city.adjacency[i].keys():
+
+                if costTable.has_key(i):
+                    costTable[i][j] = 1
+                else:
+                    costTable[i] = {}
+                    costTable[i][j] = 1
 
     return costTable
 
