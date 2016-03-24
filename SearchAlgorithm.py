@@ -48,6 +48,8 @@ class Node:
                 - f: REAL evaluate function
         """
 
+        self.f = self.g + self.h
+
 
     def setHeuristic(self, typePreference, node_destination,city):
         """"
@@ -67,7 +69,7 @@ class Node:
             print "Null Heusrisitc"
         elif typePreference == 1:
             #Minim time
-            distance = minimDistance()
+            distance = minimDistance(self.station, node_destination.station)
             velocity = city.max_velocity 
             self.h = distance/velocity
             
