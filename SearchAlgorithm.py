@@ -82,17 +82,17 @@ class Node:
             if self.station.line == node_destination.station.line:
                 self.h = 0
             else:
-                self.h = 1
+                self.h = city.min_transfer
             
         elif typePreference == 4:
             #Minim stop
             if self.station.destinationDic.has_key(node_destination.station.id):
-                self.h = 1
+                if minimDistance(stationList[i-1], stationList[j-1]) == 0:
+                    self.h = 0
+                else:
+                    self.h = 1
             else:
                 self.h = 2
-
-
-
 
     def setRealCost(self,  costTable):
         """
@@ -101,9 +101,12 @@ class Node:
                  - costTable: DICTIONARY. Relates each station with their adjacency an their real cost. NOTE that this
                              cost can be in terms of any preference.
         """
-        self.g = costTable[self.father.station.id][self.station.id] + self.father.g
+        if self.father != None:
+            self.g = costTable[self.father.station.id][self.station.id] + self.father.g
 
 
+    def __repr__(self):
+        return str(self.station.id)
 
 
 
@@ -128,7 +131,26 @@ def Expand(fatherNode, stationList, typePreference, node_destination, costTable,
                 - childrenList:  LIST of the set of child Nodes for this current node (fatherNode)
 
     """
+    child = []
+    for station in fatherNode.station.destinationDic:
+        node = Node(stationList[station - 1], fatherNode)
+        node.setRealCost(costTable[typePreference])
+        node.setHeuristic(typePreference, node_destination, city)
+        node.setEvaluation()
 
+        #parentsID
+        node.parentsID = list(fatherNode.parentsID)
+        node.parentsID.append(fatherNode.station.id)
+
+        #time
+        node.time = costTable[1][fatherNode.station.id ][station ] + fatherNode.time
+        #walk
+        node.walk = costTable[2][fatherNode.station.id ][station ] + fatherNode.walk
+        #Transfers
+        node.transfers = costTable[3][fatherNode.station.id ][station ] + fatherNode.transfers
+        child.append(node)
+
+    return child
 
 
 def RemoveCycles(childrenList):
@@ -139,7 +161,14 @@ def RemoveCycles(childrenList):
         :returns
                 - listWithoutCycles:  LIST of the set of child Nodes for a certain Node which not includes cycles
     """
-
+    listWithoutCycles = []
+    for i in childrenList:
+        print "ID:", i.station.id,"Parents:", i.parentsID
+        if not i.station.id in i.parentsID:
+            listWithoutCycles.append(i)
+        else:
+            print "Cycle removed"
+    return listWithoutCycles
 
 
 
@@ -198,8 +227,7 @@ def setCostTable( typePreference, stationList,city):
                     costTable[i][j] = stationList[i - 1].destinationDic[j]
                 else:
                     costTable[i] = {}
-                    costTable[i][j] = stationList[i - 1].destinationDic[j]
-                    
+                    costTable[i][j] = stationList[i - 1].destinationDic[j]                
     #Minimum distance           
     elif typePreference == 2:
         for i in city.adjacency.keys():
@@ -210,7 +238,7 @@ def setCostTable( typePreference, stationList,city):
                 else:
                     costTable[i] = {}
                     costTable[i][j] = distance
-                    
+    #Minimum transfer           
     elif typePreference == 3:
         for i in city.adjacency.keys():
             for j in city.adjacency[i].keys():
@@ -227,7 +255,7 @@ def setCostTable( typePreference, stationList,city):
                     else:
                         costTable[i] = {}
                         costTable[i][j] = 0
-                    
+    #Minim stops               
     elif typePreference == 4:
         for i in city.adjacency.keys():
             for j in city.adjacency[i].keys():
@@ -261,6 +289,24 @@ def coord2station(coord, stationList):
             - possible_origins: List of the Indexes of the stationList structure, which corresponds to the closest
             station
     """
+    x,y = coord
+    node = Station(0,0,0,x,y)
+    stations = [stationList[0].id - 1]
+    min = minimDistance(node, stationList[0])
+    stationList = iter(stationList)
+    next(stationList)
+
+    for i in stationList:
+        distance = minimDistance(node, i)
+        if min > distance:
+            min = distance
+            stations = []
+            stations.append(i.id - 1)
+        else:
+            if min == distance:
+                stations.append(i.id - 1)
+
+    return stations[0]
 
 
 def AstarAlgorithm(stationList, coord_origin, coord_destination, typePreference,city,flag_redundants):
@@ -297,10 +343,52 @@ def AstarAlgorithm(stationList, coord_origin, coord_destination, typePreference,
             len(expandedList), len(idsOptimalPath), visitedNodes, idsOptimalPath, min_distance_origin,
             min_distance_destination
     """
+    typePreference = int(typePreference)
+
+    costAdjacencyTable = setCostTable(0, stationList, city)
+    costTimeTable = setCostTable(1, stationList, city)
+    costDistanceTable = setCostTable(2, stationList, city)
+    costTransferTable = setCostTable(3, stationList, city)
+    costStopsTable = setCostTable(4, stationList, city)
+
+    costTable = [costAdjacencyTable,costTimeTable,costDistanceTable,costTransferTable,costStopsTable]
+    station_origin = stationList[coord2station(coord_origin, stationList)]
+    station_destination = stationList[coord2station(coord_destination, stationList)]
+    node_start = Node(station_origin, None)
+    node_end = Node(station_destination, None)
+    llista = [[node_start]]
+    visited_nodes = [node_start]
+    print llista
+    while True:
+        cap = llista.pop(0)
+        if cap[-1].station == station_destination:
+            break
+        capNode = cap[-1]
+        print "Cap:", capNode
+        E = Expand(capNode, stationList, typePreference, node_end, costTable, city)
+        E = RemoveCycles(E)
+        for i in E:
+            llista.append(cap + [i])
+            visited_nodes.append(i)
+        llista = Insercio_ordenada_f(llista)
+        print "Llista:", llista
+    if cap != None:
+        print "Encontrado!"
+        print cap
+        definitiu = []
+        print costTable[3]
+        for i in cap:
+            definitiu.append(i.station.id)
+        return cap[-1].time,cap[-1].walk,cap[-1].transfers,cap[-1].num_stopStation,len(visited_nodes),len(definitiu),visited_nodes,definitiu,0,0
+    else:
+        return "No"
 
 def minimDistance(station, destination):
-        x = fabs(destination.x - station.x)
-        y = fabs(destination.y - station.y)
+    x = fabs(destination.x - station.x)
+    y = fabs(destination.y - station.y)
             
-        return sqrt(x*x + y*y)
+    return sqrt(x*x + y*y)
 
+def Insercio_ordenada_f(llista):
+    llista = sorted(llista, key=lambda station: station[-1].f)
+    return llista
