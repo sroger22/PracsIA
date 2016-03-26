@@ -87,7 +87,7 @@ class Node:
         elif typePreference == 4:
             #Minim stop
             if self.station.destinationDic.has_key(node_destination.station.id):
-                if minimDistance(stationList[i-1], stationList[j-1]) == 0:
+                if minimDistance(self.station, node_destination.station) == 0:
                     self.h = 0
                 else:
                     self.h = 1
@@ -143,11 +143,14 @@ def Expand(fatherNode, stationList, typePreference, node_destination, costTable,
         node.parentsID.append(fatherNode.station.id)
 
         #time
-        node.time = costTable[1][fatherNode.station.id ][station ] + fatherNode.time
+        node.time = costTable[1][fatherNode.station.id ][station] + fatherNode.time
         #walk
-        node.walk = costTable[2][fatherNode.station.id ][station ] + fatherNode.walk
+        node.walk = costTable[2][fatherNode.station.id ][station] + fatherNode.walk
         #Transfers
-        node.transfers = costTable[3][fatherNode.station.id ][station ] + fatherNode.transfers
+        node.transfers = costTable[3][fatherNode.station.id ][station] + fatherNode.transfers
+        #Stops
+        node.num_stopStation = costTable[4][fatherNode.station.id][station] + fatherNode.num_stopStation
+
         child.append(node)
 
     return child
