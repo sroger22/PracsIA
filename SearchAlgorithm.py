@@ -362,7 +362,7 @@ def AstarAlgorithm(stationList, coord_origin, coord_destination, typePreference,
     while True:
         path = llista.pop(0)
         pathCap = path[-1]
-        
+
         if pathCap.station == station_destination:
             break
 
