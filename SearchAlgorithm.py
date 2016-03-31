@@ -173,7 +173,7 @@ def RemoveCycles(childrenList):
 
 
 
-def RemoveRedundantPaths():
+def RemoveRedundantPaths(childrenList, partialCostTable):
     """
         RemoveRedundantPaths:   It removes the Redundant Paths. They are not optimal solution!
                                 If a node is visited and have a lower g in this moment, TCP is updated.
@@ -184,8 +184,16 @@ def RemoveRedundantPaths():
         :returns
 
     """
+    for child in childrenList:
+        if partialCostTable.has_key(child):
+            if partialCostTable[child] > child.g:
+                partialCostTable[child] = child.g
+            else:
+                childrenList.remove(i)
+        else:
+            partialCostTable[child] = child.g
 
-
+    return childrenList
 
 
 
@@ -346,6 +354,7 @@ def AstarAlgorithm(stationList, coord_origin, coord_destination, typePreference,
     """
     typePreference = int(typePreference)
 
+    #Cost tables
     costAdjacencyTable = setCostTable(0, stationList, city)
     costTimeTable = setCostTable(1, stationList, city)
     costDistanceTable = setCostTable(2, stationList, city)
@@ -353,6 +362,8 @@ def AstarAlgorithm(stationList, coord_origin, coord_destination, typePreference,
     costStopsTable = setCostTable(4, stationList, city)
 
     costTable = [costAdjacencyTable,costTimeTable,costDistanceTable,costTransferTable,costStopsTable]
+
+    partialCostTable = {}
     station_origin = stationList[coord2station(coord_origin, stationList)]
     station_destination = stationList[coord2station(coord_destination, stationList)]
     node_start = Node(station_origin, None)
@@ -372,6 +383,9 @@ def AstarAlgorithm(stationList, coord_origin, coord_destination, typePreference,
         for i in E:
             llista.append(path + [i])
             visited_nodes.append(i)
+
+        if flag_redundants == 1:
+            E = RemoveRedundantPaths(E, partialCostTable)
 
         llista = Insercio_ordenada_f(llista)
 
