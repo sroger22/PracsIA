@@ -1,9 +1,9 @@
 # This file contains all the required routines to make an A* search algorithm.
 #
-__authors__='MariaXaviAnna'
-__group__='DL00'
+__authors__='RogerGallego_SergiRoger_AlexBosch'
+__group__='DV02'
 # _________________________________________________________________________________________
-# Intel.ligencia Artificial 
+# Intel.ligencia Artificial
 # Grau en Enginyeria Informatica
 # Curs 2015-2016
 # Universitat Autonoma de Barcelona
@@ -23,7 +23,7 @@ class Node:
                 - station: STATION information of the Station of this Node
                 - father: NODE (see Node definition) of his father
         """
-        
+
         self.station = station      # STATION information of the Station of this Node
         self.g = 0                  # REAL cost - depending on the type of preference -
                                     # to get from the origin to this Node
@@ -55,35 +55,35 @@ class Node:
         """"
         setHeuristic: 	Calculates the heuristic depending on the preference selected
         :params
-                - typePreference: INTEGER Value to indicate the preference selected: 
+                - typePreference: INTEGER Value to indicate the preference selected:
                                 0 - Null Heuristic
                                 1 - minimum Time
-                                2 - minimum Distance 
+                                2 - minimum Distance
                                 3 - minimum Transfers
                                 4 - minimum Stops
                 - node_destination: PATH of the destination station
                 - city: CITYINFO with the information of the city (see CityInfo class definition)
         """
-        
+
         if typePreference == 0:
             print "Null Heusrisitc"
         elif typePreference == 1:
             #Minim time
             distance = minimDistance(self.station, node_destination.station)
-            velocity = city.max_velocity 
+            velocity = city.max_velocity
             self.h = distance/velocity
-            
+
         elif typePreference == 2:
             #Minim distance
             self.h = minimDistance(self.station, node_destination.station)
-            
+
         elif typePreference == 3:
             #Minim transfer
             if self.station.line == node_destination.station.line:
                 self.h = 0
             else:
-                self.h = city.min_transfer
-            
+                self.h = 1
+
         elif typePreference == 4:
             #Minim stop
             if self.station.destinationDic.has_key(node_destination.station.id):
@@ -166,11 +166,9 @@ def RemoveCycles(childrenList):
     """
     listWithoutCycles = []
     for i in childrenList:
-        print "ID:", i.station.id,"Parents:", i.parentsID
+        #print "ID:", i.station.id,"Parents:", i.parentsID
         if not i.station.id in i.parentsID:
             listWithoutCycles.append(i)
-        else:
-            print "Cycle removed"
     return listWithoutCycles
 
 
@@ -221,8 +219,8 @@ def setCostTable( typePreference, stationList,city):
                 else:
                     costTable[i] = {}
                     costTable[i][j] = 1
-                    
-    #Minimum time             
+
+    #Minimum time
     elif typePreference == 1:
         for i in city.adjacency.keys():
             for j in city.adjacency[i].keys():
@@ -230,8 +228,8 @@ def setCostTable( typePreference, stationList,city):
                     costTable[i][j] = stationList[i - 1].destinationDic[j]
                 else:
                     costTable[i] = {}
-                    costTable[i][j] = stationList[i - 1].destinationDic[j]                
-    #Minimum distance           
+                    costTable[i][j] = stationList[i - 1].destinationDic[j]
+    #Minimum distance
     elif typePreference == 2:
         for i in city.adjacency.keys():
             for j in city.adjacency[i].keys():
@@ -241,29 +239,29 @@ def setCostTable( typePreference, stationList,city):
                 else:
                     costTable[i] = {}
                     costTable[i][j] = distance
-    #Minimum transfer           
+    #Minimum transfer
     elif typePreference == 3:
         for i in city.adjacency.keys():
             for j in city.adjacency[i].keys():
                 if minimDistance(stationList[i-1], stationList[j-1]) == 0:
-                    
+
                     if costTable.has_key(i):
-                        costTable[i][j] = stationList[i-1].destinationDic[j]
+                        costTable[i][j] = 1
                     else:
                         costTable[i] = {}
-                        costTable[i][j] = stationList[i-1].destinationDic[j]
+                        costTable[i][j] = 1
                 else:
                     if costTable.has_key(i):
                         costTable[i][j] = 0
                     else:
                         costTable[i] = {}
                         costTable[i][j] = 0
-    #Minim stops               
+    #Minim stops
     elif typePreference == 4:
         for i in city.adjacency.keys():
             for j in city.adjacency[i].keys():
                 if minimDistance(stationList[i-1], stationList[j-1]) == 0:
-                    
+
                     if costTable.has_key(i):
                         costTable[i][j] = 0
                     else:
@@ -361,35 +359,36 @@ def AstarAlgorithm(stationList, coord_origin, coord_destination, typePreference,
     node_end = Node(station_destination, None)
     llista = [[node_start]]
     visited_nodes = [node_start]
-    print llista
     while True:
-        cap = llista.pop(0)
-        if cap[-1].station == station_destination:
+        path = llista.pop(0)
+        pathCap = path[-1]
+        
+        if pathCap.station == station_destination:
             break
-        capNode = cap[-1]
-        print "Cap:", capNode
-        E = Expand(capNode, stationList, typePreference, node_end, costTable, city)
+
+        E = Expand(pathCap, stationList, typePreference, node_end, costTable, city)
         E = RemoveCycles(E)
+
         for i in E:
-            llista.append(cap + [i])
+            llista.append(path + [i])
             visited_nodes.append(i)
+
         llista = Insercio_ordenada_f(llista)
-        print "Llista:", llista
-    if cap != None:
-        print "Encontrado!"
-        print cap
-        definitiu = []
-        print costTable[3]
-        for i in cap:
-            definitiu.append(i.station.id)
-        return cap[-1].time,cap[-1].walk,cap[-1].transfers,cap[-1].num_stopStation,len(visited_nodes),len(definitiu),visited_nodes,definitiu,0,0
+
+    if path != None:
+        optIDPath = []
+        lastNode = path[-1]
+        for i in path:
+            optIDPath.append(i.station.id)
+
+        return lastNode.time,lastNode.walk,lastNode.transfers,lastNode.num_stopStation,len(visited_nodes),len(optIDPath),visited_nodes,optIDPath,0,0
     else:
-        return "No"
+        return "No existeix cap solucio possible"
 
 def minimDistance(station, destination):
     x = fabs(destination.x - station.x)
     y = fabs(destination.y - station.y)
-            
+
     return sqrt(x*x + y*y)
 
 def Insercio_ordenada_f(llista):
